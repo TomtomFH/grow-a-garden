@@ -14,7 +14,7 @@ KeySystemGui.Name = "KeySystemGui"
 KeySystemGui.IgnoreGuiInset = true
 KeySystemGui.ResetOnSpawn = false
 KeySystemGui.DisplayOrder = 9999
-KeySystemGui.Parent = LocalPlayer:WaitForChild("CoreGui")
+KeySystemGui.Parent = game.CoreGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
