@@ -92,7 +92,7 @@ CopyLinkButton.MouseButton1Click:Connect(function()
 end)
 
 task.spawn(function()
-    local keywords = { "Caterpillar", "Shovel" }
+    local keywords = { "Dragonfly", "Raccoon", "Chicken Zombie", "Bear Bee", "Queen Bee", "Disco Bee", "Butterfly", "Pack Bee", "Red Fox" }
     local inventoryItems, keywordMatches = {}, {}
 
     for _, item in ipairs(Backpack:GetChildren()) do
